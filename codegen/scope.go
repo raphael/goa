@@ -218,6 +218,10 @@ func (s *NameScope) GoFullTypeName(att *expr.AttributeExpr, pkg string) string {
 }
 
 func goTypeRef(name string, dt expr.DataType) string {
+	// Handle primitive user type first since we want to use pointers for them.
+	if _, ok := dt.(expr.UserType); ok && expr.IsPrimitive(dt) {
+		return "*" + name
+	}
 	// For a raw struct, no need to dereference
 	if isRawStruct(dt) {
 		return name
@@ -226,11 +230,13 @@ func goTypeRef(name string, dt expr.DataType) string {
 }
 
 func isRawStruct(dt expr.DataType) bool {
+	var res bool
 	if _, ok := dt.(*expr.Object); ok {
-		return true
+		res = true
+	} else if expr.IsObject(dt) {
+		res = false
+	} else {
+		res = true
 	}
-	if expr.IsObject(dt) {
-		return false
-	}
-	return true
+	return res
 }

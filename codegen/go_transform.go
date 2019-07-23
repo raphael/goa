@@ -99,6 +99,13 @@ func transformObject(source, target *expr.AttributeExpr, sourceVar, targetVar st
 	{
 		// walk through primitives first to initialize the struct
 		walkMatches(source, target, func(srcMatt, tgtMatt *expr.MappedAttributeExpr, srcc, tgtc *expr.AttributeExpr, n string) {
+			// primitive user types use transform functions.
+			if _, ok := srcc.Type.(expr.UserType); ok {
+				return
+			}
+			if _, ok := tgtc.Type.(expr.UserType); ok {
+				return
+			}
 			if !expr.IsPrimitive(srcc.Type) {
 				return
 			}
@@ -160,7 +167,14 @@ func transformObject(source, target *expr.AttributeExpr, sourceVar, targetVar st
 			case expr.IsMap(srcc.Type):
 				code, err = transformMapElem(expr.AsMap(srcc.Type), expr.AsMap(tgtc.Type), srcVar, tgtVar, false, ta)
 			case ok:
-				code = fmt.Sprintf("%s = %s(%s)\n", tgtVar, transformHelperName(srcc, tgtc, ta), srcVar)
+				// primitive user types transform function generate non pointer values
+				// but may be assigned to pointer fields.
+				if expr.IsPrimitive(srcc.Type) && ta.SourceCtx.IsPrimitivePointer(n, srcMatt.AttributeExpr) {
+					code = fmt.Sprintf("tmp := %s(*%s)\n", transformHelperName(srcc, tgtc, ta), srcVar)
+					code += fmt.Sprintf("%s = &tmp\n", tgtVar)
+				} else {
+					code = fmt.Sprintf("%s = %s(%s)\n", tgtVar, transformHelperName(srcc, tgtc, ta), srcVar)
+				}
 			case expr.IsObject(srcc.Type):
 				code, err = transformAttribute(srcc, tgtc, srcVar, tgtVar, false, ta)
 			}
@@ -414,7 +428,7 @@ func generateHelper(source, target *expr.AttributeExpr, req bool, ta *TransformA
 	if err != nil {
 		return nil, err
 	}
-	if !req {
+	if !req && !expr.IsPrimitive(source.Type) {
 		code = "if v == nil {\n\treturn nil\n}\n" + code
 	}
 	tfd := &TransformFunctionData{

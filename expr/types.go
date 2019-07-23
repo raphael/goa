@@ -702,8 +702,12 @@ func toReflectType(dtype DataType) reflect.Type {
 		return reflect.TypeOf("")
 	case BytesKind:
 		return reflect.TypeOf([]byte{})
-	case ObjectKind, UserTypeKind, ResultTypeKind:
+	case ObjectKind:
 		return reflect.TypeOf(map[string]interface{}{})
+	case UserTypeKind:
+		return toReflectType(dtype.(*UserTypeExpr).Attribute().Type)
+	case ResultTypeKind:
+		return toReflectType(dtype.(*ResultTypeExpr).Attribute().Type)
 	case ArrayKind:
 		return reflect.SliceOf(toReflectType(dtype.(*Array).ElemType.Type))
 	case MapKind:
