@@ -889,11 +889,12 @@ const requestParamsHeadersT = `{{- define "request_params_headers" }}
 	{{- else if eq .Type.ElemType.Type.Name "map" }}
 		{{- template "map_conversion" (mapQueryDecodeData .Type.ElemType.Type (printf "%s[key%s]" .VarName .Loop) 1) }}
 	{{- else }}
-		var val {{ goTypeRef .Type.ElemType.Type }}
+		var val{{ .Loop }} {{ goTypeRef .Type.ElemType.Type }}
 		{
-			{{- template "type_conversion" (conversionData "val" (printf "%q" "query") .Type.ElemType.Type) }}
+			val{{ .Loop }}Raw := valRaw[0]
+			{{- template "type_conversion" (conversionData (printf "val%s" .Loop)  (printf "%q" "query") .Type.ElemType.Type) }}
 		}
-		{{ .VarName }}[key{{ .Loop }}] = val
+		{{ .VarName }}[key{{ .Loop }}] = val{{ .Loop }}
 	{{- end }}
 {{- end }}
 ` + typeConversionT

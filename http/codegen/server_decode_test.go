@@ -171,6 +171,17 @@ func TestDecode(t *testing.T) {
 		{"multipart-body-array-type", testdata.PayloadMultipartArrayTypeDSL, testdata.PayloadMultipartArrayTypeDecodeCode},
 		{"multipart-body-map-type", testdata.PayloadMultipartMapTypeDSL, testdata.PayloadMultipartMapTypeDecodeCode},
 		{"with-params-and-headers-dsl", testdata.WithParamsAndHeadersBlockDSL, testdata.WithParamsAndHeadersBlockDecodeCode},
+
+		// aliases
+		{"query-int-alias", testdata.QueryIntAliasDSL, testdata.QueryIntAliasDecodeCode},
+		{"query-int-alias-validate", testdata.QueryIntAliasValidateDSL, testdata.QueryIntAliasValidateDecodeCode},
+		{"query-array-alias", testdata.QueryArrayAliasDSL, testdata.QueryArrayAliasDecodeCode},
+		{"query-array-alias-validate", testdata.QueryArrayAliasValidateDSL, testdata.QueryArrayAliasValidateDecodeCode},
+		{"query-map-alias", testdata.QueryMapAliasDSL, testdata.QueryMapAliasDecodeCode},
+		{"query-map-alias-validate", testdata.QueryMapAliasValidateDSL, testdata.QueryMapAliasValidateDecodeCode},
+		{"query-array-nested-alias-validate", testdata.QueryArrayNestedAliasValidateDSL, testdata.QueryArrayNestedAliasValidateDecodeCode},
+		{"header-int-alias", testdata.HeaderIntAliasDSL, testdata.HeaderIntAliasDecodeCode},
+		{"path-int-alias", testdata.PathIntAliasDSL, testdata.PathIntAliasDecodeCode},
 	}
 	golden := makeGolden(t, "testdata/payload_decode_functions.go")
 	if golden != nil {

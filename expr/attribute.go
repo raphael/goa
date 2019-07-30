@@ -408,7 +408,13 @@ func (a *AttributeExpr) HasDefaultValue(attName string) bool {
 // exist or if the child attribute does not have a default value.
 func (a *AttributeExpr) GetDefault(attName string) interface{} {
 	if o := AsObject(a.Type); o != nil {
-		return o.Attribute(attName).DefaultValue
+		att := o.Attribute(attName)
+		if att.DefaultValue != nil {
+			return att.DefaultValue
+		}
+		if ut, ok := att.Type.(UserType); ok && !IsObject(ut) {
+			return ut.Attribute().DefaultValue
+		}
 	}
 	return nil
 }

@@ -89,8 +89,13 @@ func NewAttributeContext(pointer, reqIgnore, useDefault bool, pkg string, scope 
 		IgnoreRequired: reqIgnore,
 		UseDefault:     useDefault,
 		Pkg:            pkg,
-		Scope:          &AttributeScope{scope: scope},
+		Scope:          NewAttributeScope(scope),
 	}
+}
+
+// NewAttributeScope initializes an attribute scope.
+func NewAttributeScope(scope *NameScope) *AttributeScope {
+	return &AttributeScope{scope: scope}
 }
 
 // IsCompatible returns an error if a and b are not both objects, both arrays,
@@ -111,12 +116,16 @@ func IsCompatible(a, b expr.DataType, actx, bctx string) error {
 			return fmt.Errorf("%s is a hash but %s type is %s", actx, bctx, b.Name())
 		}
 	default:
-		if ut, ok := a.(expr.UserType); ok {
-			return IsCompatible(ut.Attribute().Type, b, actx, bctx)
-		} else if ut, ok := b.(expr.UserType); ok {
-			return IsCompatible(a, ut.Attribute().Type, actx, bctx)
-		}
-		if a.Kind() != b.Kind() {
+		aUT, isAUT := a.(expr.UserType)
+		bUT, isBUT := b.(expr.UserType)
+		switch {
+		case isAUT && isBUT:
+			return IsCompatible(aUT.Attribute().Type, bUT.Attribute().Type, actx, bctx)
+		case isAUT:
+			return IsCompatible(aUT.Attribute().Type, b, actx, bctx)
+		case isBUT:
+			return IsCompatible(a, bUT.Attribute().Type, actx, bctx)
+		case a.Kind() != b.Kind():
 			return fmt.Errorf("%s is a %s but %s type is %s", actx, a.Name(), bctx, b.Name())
 		}
 	}
@@ -214,6 +223,7 @@ func (a *AttributeContext) Dup() *AttributeContext {
 		Pointer:        a.Pointer,
 		IgnoreRequired: a.IgnoreRequired,
 		UseDefault:     a.UseDefault,
+		Pkg:            a.Pkg,
 		Scope:          a.Scope,
 	}
 }

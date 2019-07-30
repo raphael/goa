@@ -95,5 +95,23 @@ var ValidationTypesDSL = func() {
 			})
 			Required("required_map")
 		})
+
+		Result = ResultType("application/vnd.goa.result", func() {
+			TypeName("Result")
+			Attributes(func() {
+				Attribute("required", Int, func() {
+					Minimum(10)
+				})
+			})
+		})
+
+		_ = Type("Collection", CollectionOf(Result))
+
+		_ = ResultType("application/vnd.goa.collection", func() {
+			TypeName("TypeWithCollection")
+			Attributes(func() {
+				Attribute("collection", CollectionOf(Result))
+			})
+		})
 	)
 }

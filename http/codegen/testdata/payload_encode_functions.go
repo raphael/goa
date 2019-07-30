@@ -1217,6 +1217,7 @@ func EncodeMethodQueryPrimitiveStringValidateRequest(encoder func(*http.Request)
 			return goahttp.ErrInvalidType("ServiceQueryPrimitiveStringValidate", "MethodQueryPrimitiveStringValidate", "string", v)
 		}
 		values := req.URL.Query()
+		values.Add("q", p)
 		req.URL.RawQuery = values.Encode()
 		return nil
 	}
@@ -1233,6 +1234,8 @@ func EncodeMethodQueryPrimitiveBoolValidateRequest(encoder func(*http.Request) g
 			return goahttp.ErrInvalidType("ServiceQueryPrimitiveBoolValidate", "MethodQueryPrimitiveBoolValidate", "bool", v)
 		}
 		values := req.URL.Query()
+		pStr := strconv.FormatBool(p)
+		values.Add("q", pStr)
 		req.URL.RawQuery = values.Encode()
 		return nil
 	}
@@ -1439,6 +1442,7 @@ func EncodeMethodQueryPrimitiveStringDefaultRequest(encoder func(*http.Request) 
 			return goahttp.ErrInvalidType("ServiceQueryPrimitiveStringDefault", "MethodQueryPrimitiveStringDefault", "string", v)
 		}
 		values := req.URL.Query()
+		values.Add("q", p)
 		req.URL.RawQuery = values.Encode()
 		return nil
 	}
@@ -2288,6 +2292,153 @@ func EncodeMethodMultipartMapTypeRequest(encoder func(*http.Request) goahttp.Enc
 		if err := encoder(req).Encode(p); err != nil {
 			return goahttp.ErrEncodingError("ServiceMultipartMapType", "MethodMultipartMapType", err)
 		}
+		return nil
+	}
+}
+`
+
+var QueryIntAliasEncodeCode = `// EncodeMethodARequest returns an encoder for requests sent to the
+// ServiceQueryIntAlias MethodA server.
+func EncodeMethodARequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
+	return func(req *http.Request, v interface{}) error {
+		p, ok := v.(*servicequeryintalias.MethodAPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("ServiceQueryIntAlias", "MethodA", "*servicequeryintalias.MethodAPayload", v)
+		}
+		values := req.URL.Query()
+		if p.Int != nil {
+			values.Add("int", fmt.Sprintf("%v", *p.Int))
+		}
+		if p.Int32 != nil {
+			values.Add("int32", fmt.Sprintf("%v", *p.Int32))
+		}
+		if p.Int64 != nil {
+			values.Add("int64", fmt.Sprintf("%v", *p.Int64))
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+`
+
+var QueryIntAliasValidateEncodeCode = `// EncodeMethodARequest returns an encoder for requests sent to the
+// ServiceQueryIntAliasValidate MethodA server.
+func EncodeMethodARequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
+	return func(req *http.Request, v interface{}) error {
+		p, ok := v.(*servicequeryintaliasvalidate.MethodAPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("ServiceQueryIntAliasValidate", "MethodA", "*servicequeryintaliasvalidate.MethodAPayload", v)
+		}
+		values := req.URL.Query()
+		if p.Int != nil {
+			values.Add("int", fmt.Sprintf("%v", *p.Int))
+		}
+		if p.Int32 != nil {
+			values.Add("int32", fmt.Sprintf("%v", *p.Int32))
+		}
+		if p.Int64 != nil {
+			values.Add("int64", fmt.Sprintf("%v", *p.Int64))
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+`
+
+var QueryArrayAliasEncodeCode = `// EncodeMethodARequest returns an encoder for requests sent to the
+// ServiceQueryArrayAlias MethodA server.
+func EncodeMethodARequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
+	return func(req *http.Request, v interface{}) error {
+		p, ok := v.(*servicequeryarrayalias.MethodAPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("ServiceQueryArrayAlias", "MethodA", "*servicequeryarrayalias.MethodAPayload", v)
+		}
+		values := req.URL.Query()
+		for _, value := range p.Array {
+			valueStr := strconv.FormatUint(uint64(value), 10)
+			values.Add("array", valueStr)
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+`
+
+var QueryArrayAliasValidateEncodeCode = `// EncodeMethodARequest returns an encoder for requests sent to the
+// ServiceQueryArrayAliasValidate MethodA server.
+func EncodeMethodARequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
+	return func(req *http.Request, v interface{}) error {
+		p, ok := v.(*servicequeryarrayaliasvalidate.MethodAPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("ServiceQueryArrayAliasValidate", "MethodA", "*servicequeryarrayaliasvalidate.MethodAPayload", v)
+		}
+		values := req.URL.Query()
+		for _, value := range p.Array {
+			valueStr := strconv.FormatUint(uint64(value), 10)
+			values.Add("array", valueStr)
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+`
+
+var QueryMapAliasEncodeCode = `// EncodeMethodARequest returns an encoder for requests sent to the
+// ServiceQueryMapAlias MethodA server.
+func EncodeMethodARequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
+	return func(req *http.Request, v interface{}) error {
+		p, ok := v.(*servicequerymapalias.MethodAPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("ServiceQueryMapAlias", "MethodA", "*servicequerymapalias.MethodAPayload", v)
+		}
+		values := req.URL.Query()
+		for kRaw, value := range p.Map {
+			k := strconv.FormatFloat(float64(kRaw), 'f', -1, 32)
+			key := fmt.Sprintf("map[%s]", k)
+			valueStr := strconv.FormatBool(value)
+			values.Add(key, valueStr)
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+`
+
+var QueryMapAliasValidateEncodeCode = `// EncodeMethodARequest returns an encoder for requests sent to the
+// ServiceQueryMapAliasValidate MethodA server.
+func EncodeMethodARequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
+	return func(req *http.Request, v interface{}) error {
+		p, ok := v.(*servicequerymapaliasvalidate.MethodAPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("ServiceQueryMapAliasValidate", "MethodA", "*servicequerymapaliasvalidate.MethodAPayload", v)
+		}
+		values := req.URL.Query()
+		for kRaw, value := range p.Map {
+			k := strconv.FormatFloat(float64(kRaw), 'f', -1, 32)
+			key := fmt.Sprintf("map[%s]", k)
+			valueStr := strconv.FormatBool(value)
+			values.Add(key, valueStr)
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+`
+
+var QueryArrayNestedAliasValidateEncodeCode = `// EncodeMethodARequest returns an encoder for requests sent to the
+// ServiceQueryArrayAliasValidate MethodA server.
+func EncodeMethodARequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
+	return func(req *http.Request, v interface{}) error {
+		p, ok := v.(*servicequeryarrayaliasvalidate.MethodAPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("ServiceQueryArrayAliasValidate", "MethodA", "*servicequeryarrayaliasvalidate.MethodAPayload", v)
+		}
+		values := req.URL.Query()
+		for _, value := range p.Array {
+			valueStr := strconv.FormatFloat(float64(value), 'f', -1, 64)
+			values.Add("array", valueStr)
+		}
+		req.URL.RawQuery = values.Encode()
 		return nil
 	}
 }

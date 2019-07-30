@@ -2646,3 +2646,191 @@ var WithParamsAndHeadersBlockDSL = func() {
 		})
 	})
 }
+
+var QueryIntAliasDSL = func() {
+	var IntAlias = Type("IntAlias", Int)
+	var Int32Alias = Type("Int32Alias", Int32)
+	var Int64Alias = Type("Int64Alias", Int64)
+	Service("ServiceQueryIntAlias", func() {
+		Method("MethodA", func() {
+			Payload(func() {
+				Attribute("int", IntAlias)
+				Attribute("int32", Int32Alias)
+				Attribute("int64", Int64Alias)
+			})
+			HTTP(func() {
+				POST("/")
+				Params(func() {
+					Param("int")
+					Param("int32")
+					Param("int64")
+				})
+			})
+		})
+	})
+}
+
+var HeaderIntAliasDSL = func() {
+	var IntAlias = Type("IntAlias", Int)
+	var Int32Alias = Type("Int32Alias", Int32)
+	var Int64Alias = Type("Int64Alias", Int64)
+	Service("ServiceHeaderIntAlias", func() {
+		Method("MethodA", func() {
+			Payload(func() {
+				Attribute("int", IntAlias)
+				Attribute("int32", Int32Alias)
+				Attribute("int64", Int64Alias)
+			})
+			HTTP(func() {
+				POST("/")
+				Headers(func() {
+					Header("int")
+					Header("int32")
+					Header("int64")
+				})
+			})
+		})
+	})
+}
+
+var PathIntAliasDSL = func() {
+	var IntAlias = Type("IntAlias", Int)
+	var Int32Alias = Type("Int32Alias", Int32)
+	var Int64Alias = Type("Int64Alias", Int64)
+	Service("ServicePathIntAlias", func() {
+		Method("MethodA", func() {
+			Payload(func() {
+				Attribute("int", IntAlias)
+				Attribute("int32", Int32Alias)
+				Attribute("int64", Int64Alias)
+			})
+			HTTP(func() {
+				POST("/{int}/{int32}/{int64}")
+			})
+		})
+	})
+}
+
+var QueryIntAliasValidateDSL = func() {
+	var IntAlias = Type("IntAlias", Int, func() {
+		Minimum(10)
+	})
+	var Int32Alias = Type("Int32Alias", Int32, func() {
+		Maximum(100)
+	})
+	var Int64Alias = Type("Int64Alias", Int64, func() {
+		Minimum(0)
+	})
+	Service("ServiceQueryIntAliasValidate", func() {
+		Method("MethodA", func() {
+			Payload(func() {
+				Attribute("int", IntAlias)
+				Attribute("int32", Int32Alias)
+				Attribute("int64", Int64Alias)
+			})
+			HTTP(func() {
+				POST("/")
+				Params(func() {
+					Param("int")
+					Param("int32")
+					Param("int64")
+				})
+			})
+		})
+	})
+}
+
+var QueryArrayAliasDSL = func() {
+	var ArrayAlias = Type("ArrayAlias", ArrayOf(UInt))
+	Service("ServiceQueryArrayAlias", func() {
+		Method("MethodA", func() {
+			Payload(func() {
+				Attribute("array", ArrayAlias)
+			})
+			HTTP(func() {
+				POST("/")
+				Params(func() {
+					Param("array")
+				})
+			})
+		})
+	})
+}
+
+var QueryArrayAliasValidateDSL = func() {
+	var ArrayAlias = Type("ArrayAlias", ArrayOf(UInt), func() {
+		MinLength(3)
+		Elem(func() {
+			Minimum(10)
+		})
+	})
+	Service("ServiceQueryArrayAliasValidate", func() {
+		Method("MethodA", func() {
+			Payload(func() {
+				Attribute("array", ArrayAlias)
+			})
+			HTTP(func() {
+				POST("/")
+				Params(func() {
+					Param("array")
+				})
+			})
+		})
+	})
+}
+
+var QueryMapAliasDSL = func() {
+	var MapAlias = Type("MapAlias", MapOf(Float32, Boolean))
+	Service("ServiceQueryMapAlias", func() {
+		Method("MethodA", func() {
+			Payload(func() {
+				Attribute("map", MapAlias)
+			})
+			HTTP(func() {
+				POST("/")
+				Params(func() {
+					Param("map")
+				})
+			})
+		})
+	})
+}
+
+var QueryMapAliasValidateDSL = func() {
+	var MapAlias = Type("MapAlias", MapOf(Float32, Boolean), func() {
+		MinLength(5)
+	})
+	Service("ServiceQueryMapAliasValidate", func() {
+		Method("MethodA", func() {
+			Payload(func() {
+				Attribute("map", MapAlias)
+			})
+			HTTP(func() {
+				POST("/")
+				Params(func() {
+					Param("map")
+				})
+			})
+		})
+	})
+}
+
+var QueryArrayNestedAliasValidateDSL = func() {
+	var Float64Alias = Type("Float64Alias", Float64, func() {
+		Minimum(10)
+	})
+	var ArrayAlias = Type("ArrayAlias", ArrayOf(Float64Alias))
+	Service("ServiceQueryArrayAliasValidate", func() {
+		Method("MethodA", func() {
+			Payload(func() {
+				Attribute("array", ArrayAlias)
+			})
+			HTTP(func() {
+				POST("/")
+				Params(func() {
+					Param("array")
+				})
+			})
+		})
+	})
+}

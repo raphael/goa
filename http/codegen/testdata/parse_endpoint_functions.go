@@ -635,6 +635,7 @@ func BuildMethodMultiSimplePayloadPayload(serviceMultiSimple1MethodMultiSimplePa
 	v := &servicemultisimple1.MethodMultiSimplePayloadPayload{
 		A: body.A,
 	}
+
 	return v, nil
 }
 `
@@ -673,6 +674,7 @@ func BuildMethodMultiPayloadPayload(serviceMultiMethodMultiPayloadBody string, s
 	}
 	v.B = b
 	v.A = a
+
 	return v, nil
 }
 `
@@ -692,10 +694,10 @@ func BuildMethodQueryBoolPayload(serviceQueryBoolMethodQueryBoolQ string) (*serv
 			}
 		}
 	}
-	payload := &servicequerybool.MethodQueryBoolPayload{
-		Q: q,
-	}
-	return payload, nil
+	v := &servicequerybool.MethodQueryBoolPayload{}
+	v.Q = q
+
+	return v, nil
 }
 `
 
@@ -725,6 +727,7 @@ func BuildMethodBodyQueryPathObjectPayload(serviceBodyQueryPathObjectMethodBodyQ
 	}
 	v.C = &c2
 	v.B = b
+
 	return v, nil
 }
 `
@@ -940,10 +943,7 @@ func BuildMethodBodyInlineArrayUserPayload(serviceBodyInlineArrayUserMethodBodyI
 	}
 	v := make([]*servicebodyinlinearrayuser.ElemType, len(body))
 	for i, val := range body {
-		v[i] = &servicebodyinlinearrayuser.ElemType{
-			A: val.A,
-			B: val.B,
-		}
+		v[i] = marshalElemTypeRequestBodyToServicebodyinlinearrayuserElemType(val)
 	}
 	return v, nil
 }
@@ -962,15 +962,8 @@ func BuildMethodBodyInlineMapUserPayload(serviceBodyInlineMapUserMethodBodyInlin
 	}
 	v := make(map[*servicebodyinlinemapuser.KeyType]*servicebodyinlinemapuser.ElemType, len(body))
 	for key, val := range body {
-		tk := &servicebodyinlinemapuser.KeyType{
-			A: key.A,
-			B: key.B,
-		}
-		tv := &servicebodyinlinemapuser.ElemType{
-			A: val.A,
-			B: val.B,
-		}
-		v[tk] = tv
+		tk := marshalKeyTypeRequestBodyToServicebodyinlinemapuserKeyType(val)
+		v[tk] = marshalElemTypeRequestBodyToServicebodyinlinemapuserElemType(val)
 	}
 	return v, nil
 }
@@ -1109,6 +1102,7 @@ func BuildMethodMapQueryObjectPayload(serviceMapQueryObjectMethodMapQueryObjectB
 	}
 	v.A = a
 	v.C = c
+
 	return v, nil
 }
 `
@@ -1129,10 +1123,10 @@ func BuildMethodQueryUInt32Payload(serviceQueryUInt32MethodQueryUInt32Q string) 
 			}
 		}
 	}
-	payload := &servicequeryuint32.MethodQueryUInt32Payload{
-		Q: q,
-	}
-	return payload, nil
+	v := &servicequeryuint32.MethodQueryUInt32Payload{}
+	v.Q = q
+
+	return v, nil
 }
 `
 
@@ -1152,10 +1146,10 @@ func BuildMethodQueryUIntPayload(serviceQueryUIntMethodQueryUIntQ string) (*serv
 			}
 		}
 	}
-	payload := &servicequeryuint.MethodQueryUIntPayload{
-		Q: q,
-	}
-	return payload, nil
+	v := &servicequeryuint.MethodQueryUIntPayload{}
+	v.Q = q
+
+	return v, nil
 }
 `
 
@@ -1168,10 +1162,10 @@ func BuildMethodQueryStringPayload(serviceQueryStringMethodQueryStringQ string) 
 			q = &serviceQueryStringMethodQueryStringQ
 		}
 	}
-	payload := &servicequerystring.MethodQueryStringPayload{
-		Q: q,
-	}
-	return payload, nil
+	v := &servicequerystring.MethodQueryStringPayload{}
+	v.Q = q
+
+	return v, nil
 }
 `
 
@@ -1182,10 +1176,10 @@ func BuildMethodQueryStringValidatePayload(serviceQueryStringValidateMethodQuery
 	{
 		q = serviceQueryStringValidateMethodQueryStringValidateQ
 	}
-	payload := &servicequerystringvalidate.MethodQueryStringValidatePayload{
-		Q: q,
-	}
-	return payload, nil
+	v := &servicequerystringvalidate.MethodQueryStringValidatePayload{}
+	v.Q = q
+
+	return v, nil
 }
 `
 
@@ -1198,10 +1192,10 @@ func BuildMethodQueryStringDefaultPayload(serviceQueryStringDefaultMethodQuerySt
 			q = serviceQueryStringDefaultMethodQueryStringDefaultQ
 		}
 	}
-	payload := &servicequerystringdefault.MethodQueryStringDefaultPayload{
-		Q: q,
-	}
-	return payload, nil
+	v := &servicequerystringdefault.MethodQueryStringDefaultPayload{}
+	v.Q = q
+
+	return v, nil
 }
 `
 
@@ -1219,10 +1213,10 @@ func BuildMethodBodyPrimitiveArrayUserPayload(serviceBodyPrimitiveArrayUserMetho
 			}
 		}
 	}
-	payload := &servicebodyprimitivearrayuser.PayloadType{
-		A: a,
-	}
-	return payload, nil
+	v := &servicebodyprimitivearrayuser.PayloadType{}
+	v.A = a
+
+	return v, nil
 }
 `
 
@@ -1288,6 +1282,7 @@ func BuildMethodAPayload(serviceWithParamsAndHeadersBlockMethodABody string, ser
 	v.OptionalButRequiredParam = &optionalButRequiredParam
 	v.Required = required
 	v.OptionalButRequiredHeader = &optionalButRequiredHeader
+
 	return v, nil
 }
 `

@@ -173,6 +173,9 @@ func clientType(genpkg string, svc *expr.HTTPServiceExpr, seen map[string]struct
 					Name:   "client-result-init",
 					Source: clientTypeInitT,
 					Data:   init,
+					FuncMap: map[string]interface{}{
+						"fieldCode": fieldCode,
+					},
 				})
 			}
 		}
@@ -185,6 +188,9 @@ func clientType(genpkg string, svc *expr.HTTPServiceExpr, seen map[string]struct
 						Name:   "client-error-result-init",
 						Source: clientTypeInitT,
 						Data:   init,
+						FuncMap: map[string]interface{}{
+							"fieldCode": fieldCode,
+						},
 					})
 				}
 			}
@@ -214,31 +220,20 @@ func {{ .Name }}({{ range .ClientArgs }}{{ .Name }} {{.TypeRef }}, {{ end }}) {{
 // input: InitData
 const clientTypeInitT = `{{ comment .Description }}
 func {{ .Name }}({{- range .ClientArgs }}{{ .Name }} {{ .TypeRef }}, {{ end }}) {{ .ReturnTypeRef }} {
-	{{- if .ClientCode }}
-		{{ .ClientCode }}
-		{{- if .ReturnTypeAttribute }}
+{{- if .ClientCode }}
+	{{ .ClientCode }}
+	{{- if .ReturnTypeAttribute }}
 		res := &{{ .ReturnTypeName }}{
 			{{ .ReturnTypeAttribute }}: {{ if .ReturnIsPrimitivePointer }}&{{ end }}v,
 		}
-		{{- end }}
-		{{- if .ReturnIsStruct }}
-			{{- range .ClientArgs }}
-				{{- if .FieldName }}
-			{{ if $.ReturnTypeAttribute }}res{{ else }}v{{ end }}.{{ .FieldName }} = {{ if and (not .Pointer) .FieldPointer }}&{{ end }}{{ .Name }}
-				{{- end }}
-			{{- end }}
-		{{- end }}
-		return {{ if .ReturnTypeAttribute }}res{{ else }}v{{ end }}
-	{{- else }}
-		{{- if .ReturnIsStruct }}
-			return &{{ .ReturnTypeName }}{
-			{{- range .ClientArgs }}
-				{{- if .FieldName }}
-				{{ .FieldName }}: {{ if and (not .Pointer) .FieldPointer }}&{{ end }}{{ .Name }},
-				{{- end }}
-			{{- end }}
-			}
-		{{- end }}
-	{{ end -}}
+	{{- end }}
+{{- end }}
+{{- if .ReturnIsStruct }}
+	{{- if not .ClientCode }}
+	{{ if .ReturnTypeAttribute }}res{{ else }}v{{ end }} := &{{ .ReturnTypeName }}{}
+	{{- end }}
+	{{ fieldCode . "client" }}
+{{- end }}
+	return {{ if .ReturnTypeAttribute }}res{{ else }}v{{ end }}
 }
 `

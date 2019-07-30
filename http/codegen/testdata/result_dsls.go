@@ -599,6 +599,22 @@ var ResultBodyUserDSL = func() {
 	})
 }
 
+var ResultTypeValidateDSL = func() {
+	var ResultType = Type("ResultType", func() {
+		Attribute("a", String, func() {
+			MinLength(5)
+		})
+	})
+	Service("ServiceResultTypeValidate", func() {
+		Method("MethodResultTypeValidate", func() {
+			Result(ResultType)
+			HTTP(func() {
+				POST("/")
+			})
+		})
+	})
+}
+
 var ResultBodyMultipleViewsDSL = func() {
 	var ResultType = ResultType("ResultTypeMultipleViews", func() {
 		Attribute("a", String)
@@ -673,6 +689,32 @@ var ResultBodyCollectionExplicitViewDSL = func() {
 		Method("MethodBodyCollectionExplicitView", func() {
 			Result(CollectionOf(RT), func() {
 				View("tiny")
+			})
+			HTTP(func() {
+				POST("/")
+				Response(StatusOK)
+			})
+		})
+	})
+}
+
+var ResultWithResultCollectionDSL = func() {
+	var RT = ResultType("RT", func() {
+		Attributes(func() {
+			Attribute("x", String, func() {
+				MinLength(5)
+			})
+		})
+	})
+	var ResultType = ResultType("ResultType", func() {
+		Attributes(func() {
+			Attribute("x", CollectionOf(RT))
+		})
+	})
+	Service("ServiceResultWithResultCollection", func() {
+		Method("MethodResultWithResultCollection", func() {
+			Result(func() {
+				Attribute("a", ResultType)
 			})
 			HTTP(func() {
 				POST("/")

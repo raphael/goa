@@ -132,23 +132,10 @@ type (
 		ReturnIsStruct bool
 		// ReturnTypeName is the fully-qualified name of the payload.
 		ReturnTypeName string
+		// ReturnTypePkg is the package name where the payload is present.
+		ReturnTypePkg string
 		// Args is the list of arguments for the constructor.
-		Args []*PayloadInitArgData
-	}
-
-	// PayloadInitArgData contains the data needed to render payload initlization
-	// arguments.
-	PayloadInitArgData struct {
-		// Name is the argument name.
-		Name string
-		// Pointer if true indicates that the argument is a pointer.
-		Pointer bool
-		// FieldName is the name of the field in the payload initialized by the
-		// argument.
-		FieldName string
-		// FieldPointer if true indicates that the field in the payload is a
-		// pointer.
-		FieldPointer bool
+		Args []*codegen.InitArgData
 	}
 )
 
@@ -301,6 +288,9 @@ func PayloadBuilderSection(buildFunction *BuildFunctionData) *codegen.SectionTem
 		Name:   "cli-build-payload",
 		Source: buildPayloadT,
 		Data:   buildFunction,
+		FuncMap: map[string]interface{}{
+			"fieldCode": fieldCode,
+		},
 	}
 }
 
@@ -540,6 +530,22 @@ func generateExample(sub *SubcommandData, svc string) {
 	sub.Example = ex
 }
 
+// fieldCode generates code to initialize the data structures fields
+// from the given args. It is used only in templates.
+func fieldCode(init *PayloadInitData) string {
+	varn := "res"
+	if init.ReturnTypeAttribute == "" {
+		varn = "v"
+	}
+	// We can ignore the transform helpers as there won't be any generated
+	// because the args cannot be user types.
+	c, _, err := codegen.InitStructFields(init.Args, init.ReturnTypeName, varn, "", init.ReturnTypePkg, init.Code == "")
+	if err != nil {
+		panic(err) //bug
+	}
+	return c
+}
+
 // input: []string
 const usageT = `// UsageCommands returns the set of commands and sub-commands using the format
 //
@@ -672,49 +678,33 @@ Example:
 // input: buildFunctionData
 const buildPayloadT = `{{ printf "%s builds the payload for the %s %s endpoint from CLI flags." .Name .ServiceName .MethodName | comment }}
 func {{ .Name }}({{ range .FormalParams }}{{ . }} string, {{ end }}) ({{ .ResultType }}, error) {
-	{{- if .CheckErr }}
+{{- if .CheckErr }}
 	var err error
+{{- end }}
+{{- range .Fields }}
+	{{- if .VarName }}
+		var {{ .VarName }} {{ .TypeRef }}
+		{
+			{{ .Init }}
+		}
 	{{- end }}
-	{{- range .Fields }}
-		{{- if .VarName }}
-	var {{ .VarName }} {{ .TypeRef }}
-	{
-		{{ .Init }}
-	}
+{{- end }}
+{{- with .PayloadInit }}
+	{{- if .Code }}
+		{{ .Code }}
+		{{- if .ReturnTypeAttribute }}
+			res := &{{ .ReturnTypeName }}{
+				{{ .ReturnTypeAttribute }}: v,
+			}
 		{{- end }}
 	{{- end }}
-	{{- with .PayloadInit }}
-
-		{{- if .Code }}
-	{{ .Code }}
-			{{- if .ReturnTypeAttribute }}
-	res := &{{ .ReturnTypeName }}{
-		{{ .ReturnTypeAttribute }}: v,
-	}
-			{{- end }}
-			{{- if .ReturnIsStruct }}
-				{{- range .Args }}
-					{{- if .FieldName }}
-	{{ if $.PayloadInit.ReturnTypeAttribute }}res{{ else }}v{{ end }}.{{ .FieldName }} = {{ if and (not .Pointer) .FieldPointer }}&{{ end }}{{ .Name }}
-				{{- end }}
-			{{- end }}
+	{{- if .ReturnIsStruct }}
+		{{- if not .Code }}
+		{{ if .ReturnTypeAttribute }}res{{ else }}v{{ end }} := &{{ .ReturnTypeName }}{}
 		{{- end }}
+		{{ fieldCode . }}
+	{{- end }}
 	return {{ if .ReturnTypeAttribute }}res{{ else }}v{{ end }}, nil
-
-		{{- else }}
-			{{- if .ReturnIsStruct }}
-	payload := &{{ .ReturnTypeName }}{
-				{{- range .Args }}
-					{{- if .FieldName }}
-		{{ .FieldName }}: {{ if and (not .Pointer) .FieldPointer }}&{{ end }}{{ .Name }},
-					{{- end }}
-				{{- end }}
-	}
-	return payload, nil
-			{{-  end }}
-
-		{{- end }}
-
-	{{- end }}
+{{- end }}
 }
 `

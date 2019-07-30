@@ -2,9 +2,33 @@ package codegen
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"strings"
 	"unicode"
+
+	"goa.design/goa/v3/expr"
+)
+
+type (
+	// InitArgData contains the data needed to render code to initlize struct
+	// fields with the given arguments.
+	InitArgData struct {
+		// Name is the argument name.
+		Name string
+		// Pointer if true indicates that the argument is a pointer.
+		Pointer bool
+		// Type is the argument type.
+		Type expr.DataType
+		// FieldName is the name of the field in the struct initialized by the
+		// argument.
+		FieldName string
+		// FieldPointer if true indicates that the field in the struct is a
+		// pointer.
+		FieldPointer bool
+		// FieldType is the type of the field in the struct.
+		FieldType expr.DataType
+	}
 )
 
 // TemplateFuncs lists common template helper functions.
@@ -225,6 +249,44 @@ func WrapText(text string, maxChars int) string {
 		}
 	}
 	return res[:len(res)-1]
+}
+
+// InitStructFields produces Go code to initialize a struct and its fields from
+// the given init arguments.
+func InitStructFields(args []*InitArgData, name, targetVar, sourcePkg, targetPkg string, mustInit bool) (string, []*TransformFunctionData, error) {
+	scope := NewNameScope()
+	scope.Unique(targetVar)
+
+	var (
+		code    string
+		helpers []*TransformFunctionData
+	)
+	for _, arg := range args {
+		if arg.FieldName == "" {
+			continue
+		}
+		if expr.Equal(arg.Type, arg.FieldType) {
+			// arg type and struct field type are the same. No need to call transform
+			// to initialize the field
+			deref := ""
+			if !arg.Pointer && arg.FieldPointer && expr.IsPrimitive(arg.FieldType) {
+				deref = "&"
+			}
+			code += fmt.Sprintf("%s.%s = %s%s\n", targetVar, arg.FieldName, deref, arg.Name)
+			continue
+		}
+		srcctx := NewAttributeContext(arg.Pointer, false, true, sourcePkg, scope)
+		tgtctx := NewAttributeContext(arg.FieldPointer, false, true, targetPkg, scope)
+		c, h, err := GoTransformToVar(
+			&expr.AttributeExpr{Type: arg.Type}, &expr.AttributeExpr{Type: arg.FieldType},
+			arg.Name, fmt.Sprintf("%s.%s", targetVar, arg.FieldName), srcctx, tgtctx, "", false)
+		if err != nil {
+			return "", helpers, err
+		}
+		code += c + "\n"
+		helpers = AppendHelpers(helpers, h)
+	}
+	return code, helpers, nil
 }
 
 func runeSpacePosRev(r []rune) int {

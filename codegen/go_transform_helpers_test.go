@@ -12,11 +12,15 @@ func TestGoTransformHelpers(t *testing.T) {
 	var (
 		scope = NewNameScope()
 		// types to test
-		simple    = root.UserType("Simple")
-		recursive = root.UserType("Recursive")
-		composite = root.UserType("Composite")
-		deep      = root.UserType("Deep")
-		deepArray = root.UserType("DeepArray")
+		simple        = root.UserType("Simple")
+		recursive     = root.UserType("Recursive")
+		composite     = root.UserType("Composite")
+		deep          = root.UserType("Deep")
+		deepArray     = root.UserType("DeepArray")
+		simpleAlias   = root.UserType("SimpleAlias")
+		mapAlias      = root.UserType("NestedMapAlias")
+		arrayMapAlias = root.UserType("ArrayMapAlias")
+		collection    = root.UserType("ResultTypeCollection")
 		// attribute contexts used in test cases
 		defaultCtx = NewAttributeContext(false, false, true, "", scope)
 	)
@@ -30,6 +34,10 @@ func TestGoTransformHelpers(t *testing.T) {
 		{"composite", composite, []string{"transformSimpleToSimple"}},
 		{"deep", deep, []string{"transformCompositeToComposite", "transformSimpleToSimple"}},
 		{"deep-array", deepArray, []string{"transformCompositeToComposite", "transformSimpleToSimple"}},
+		{"simple-alias", simpleAlias, []string{}},
+		{"nested-map-alias", mapAlias, []string{}},
+		{"array-map-alias", arrayMapAlias, []string{}},
+		{"result-type-collection", collection, []string{"transformResultTypeToResultType"}},
 	}
 	for _, c := range tc {
 		t.Run(c.Name, func(t *testing.T) {

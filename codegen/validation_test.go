@@ -19,6 +19,9 @@ func TestRecursiveValidationCode(t *testing.T) {
 		arrayUT  = root.UserType("ArrayUserType")
 		arrayT   = root.UserType("Array")
 		mapT     = root.UserType("Map")
+		rtT      = root.UserType("Result")
+		rtcolT   = root.UserType("Collection")
+		colT     = root.UserType("TypeWithCollection")
 	)
 	cases := []struct {
 		Name       string
@@ -47,6 +50,10 @@ func TestRecursiveValidationCode(t *testing.T) {
 		{"map-required", mapT, true, false, false, testdata.MapRequiredValidationCode},
 		{"map-pointer", mapT, false, true, false, testdata.MapPointerValidationCode},
 		{"map-use-default", mapT, false, false, true, testdata.MapUseDefaultValidationCode},
+		{"result-type-pointer", rtT, false, true, false, testdata.ResultTypePointerValidationCode},
+		{"collection-required", rtcolT, true, false, false, testdata.ResultCollectionPointerValidationCode},
+		{"collection-pointer", rtcolT, false, true, false, testdata.ResultCollectionPointerValidationCode},
+		{"type-with-collection-pointer", colT, false, true, false, testdata.TypeWithCollectionPointerValidationCode},
 	}
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {

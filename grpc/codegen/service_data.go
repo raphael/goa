@@ -122,6 +122,8 @@ type (
 		// FieldName is the name of the struct field that holds the
 		// metadata value if any, empty string otherwise.
 		FieldName string
+		// FieldType is the type of the struct field.
+		FieldType expr.DataType
 		// VarName is the name of the Go variable used to read or
 		// convert the metadata value.
 		VarName string
@@ -265,6 +267,8 @@ type (
 		// ReturnTypeRef is the qualified (including the package name)
 		// reference to the return type.
 		ReturnTypeRef string
+		// ReturnTypePkg is the package where the return type is present.
+		ReturnTypePkg string
 		// ReturnIsStruct is true if the return type is a struct.
 		ReturnIsStruct bool
 		// Code is the transformation code.
@@ -282,10 +286,15 @@ type (
 		// FieldName is the name of the data structure field that should
 		// be initialized with the argument if any.
 		FieldName string
+		// FieldType is the type of the data structure field that should be
+		// initialized with the argument if any.
+		FieldType expr.DataType
 		// TypeName is the argument type name.
 		TypeName string
 		// TypeRef is the argument type reference.
 		TypeRef string
+		// Type is the argument type. It is never an aliased user type.
+		Type expr.DataType
 		// Pointer is true if a pointer to the arg should be used.
 		Pointer bool
 		// Required is true if the arg is required to build the payload.
@@ -526,8 +535,10 @@ func (d ServicesData) analyze(gs *expr.GRPCServiceExpr) *ServiceData {
 					Name:      m.VarName,
 					Ref:       m.VarName,
 					FieldName: m.FieldName,
+					FieldType: m.FieldType,
 					TypeName:  m.TypeName,
 					TypeRef:   m.TypeRef,
+					Type:      m.Type,
 					Pointer:   m.Pointer,
 					Required:  m.Required,
 					Validate:  m.Validate,
@@ -795,8 +806,10 @@ func buildRequestConvertData(request, payload *expr.AttributeExpr, md []*Metadat
 					Name:      m.VarName,
 					Ref:       m.VarName,
 					FieldName: m.FieldName,
+					FieldType: m.FieldType,
 					TypeName:  m.TypeName,
 					TypeRef:   m.TypeRef,
+					Type:      m.Type,
 					Pointer:   m.Pointer,
 					Required:  m.Required,
 					Validate:  m.Validate,
@@ -879,8 +892,10 @@ func buildResponseConvertData(response, result *expr.AttributeExpr, svcCtx *code
 				Name:      m.VarName,
 				Ref:       m.VarName,
 				FieldName: m.FieldName,
+				FieldType: m.FieldType,
 				TypeName:  m.TypeName,
 				TypeRef:   m.TypeRef,
+				Type:      m.Type,
 				Pointer:   m.Pointer,
 				Required:  m.Required,
 				Validate:  m.Validate,
@@ -893,8 +908,10 @@ func buildResponseConvertData(response, result *expr.AttributeExpr, svcCtx *code
 				Name:      m.VarName,
 				Ref:       m.VarName,
 				FieldName: m.FieldName,
+				FieldType: m.FieldType,
 				TypeName:  m.TypeName,
 				TypeRef:   m.TypeRef,
+				Type:      m.Type,
 				Pointer:   m.Pointer,
 				Required:  m.Required,
 				Validate:  m.Validate,
@@ -977,6 +994,7 @@ func buildInitData(source, target *expr.AttributeExpr, sourceVar, targetVar stri
 		ReturnVarName:  targetVar,
 		ReturnTypeRef:  tgtCtx.Scope.Ref(target, tgtCtx.Pkg),
 		ReturnIsStruct: isStruct,
+		ReturnTypePkg:  tgtCtx.Pkg,
 		Code:           code,
 		Args:           args,
 	}
@@ -1186,6 +1204,7 @@ func extractMetadata(a *expr.MappedAttributeExpr, service *expr.AttributeExpr, s
 			arr     = expr.AsArray(c.Type)
 			mp      = expr.AsMap(c.Type)
 			typeRef = scope.GoTypeRef(c)
+			ft      = service.Type
 		)
 		{
 			varn = scope.Name(codegen.Goify(name, false))
@@ -1194,6 +1213,7 @@ func extractMetadata(a *expr.MappedAttributeExpr, service *expr.AttributeExpr, s
 				fieldName = ""
 			} else {
 				pointer = service.IsPrimitivePointer(name, true)
+				ft = service.Find(name).Type
 			}
 			if pointer {
 				typeRef = "*" + typeRef
@@ -1204,6 +1224,7 @@ func extractMetadata(a *expr.MappedAttributeExpr, service *expr.AttributeExpr, s
 			AttributeName: name,
 			Description:   c.Description,
 			FieldName:     fieldName,
+			FieldType:     ft,
 			VarName:       varn,
 			Required:      required,
 			Type:          c.Type,
