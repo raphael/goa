@@ -212,6 +212,10 @@ func transTmplFuncs(s *expr.HTTPServiceExpr) map[string]interface{} {
 		"goTypeRef": func(dt expr.DataType) string {
 			return service.Services.Get(s.Name()).Scope.GoTypeRef(&expr.AttributeExpr{Type: dt})
 		},
+		"isAliased": func(dt expr.DataType) bool {
+			_, ok := dt.(expr.UserType)
+			return ok
+		},
 		"conversionData":       conversionData,
 		"headerConversionData": headerConversionData,
 		"printValue":           printValue,
@@ -1164,8 +1168,13 @@ const responseT = `{{ define "response" -}}
 		{{- if eq .Type.Name "string" }}
 	w.Header().Set("{{ .CanonicalName }}", {{ if or .FieldPointer $.ViewedResult }}*{{ end }}res{{ if $.ViewedResult }}.Projected{{ end }}{{ if .FieldName }}.{{ .FieldName }}{{ end }})
 		{{- else }}
+			{{- if isAliased .FieldType }}
+	val := {{ goTypeRef .Type }}({{ if .FieldPointer }}*{{ end }}res{{ if $.ViewedResult }}.Projected{{ end }}{{ if .FieldName }}.{{ .FieldName }}{{ end }})
+	{{ template "header_conversion" (headerConversionData .Type (printf "%ss" .VarName) true "val") }}
+			{{- else }}
 	val := res{{ if $.ViewedResult }}.Projected{{ end }}{{ if .FieldName }}.{{ .FieldName }}{{ end }}
 	{{ template "header_conversion" (headerConversionData .Type (printf "%ss" .VarName) (not .FieldPointer) "val") }}
+			{{- end }}
 	w.Header().Set("{{ .CanonicalName }}", {{ .VarName }}s)
 		{{- end }}
 

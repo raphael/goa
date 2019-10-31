@@ -1489,7 +1489,9 @@ func EncodeMethodHeaderArrayStringRequest(encoder func(*http.Request) goahttp.En
 		if !ok {
 			return goahttp.ErrInvalidType("ServiceHeaderArrayString", "MethodHeaderArrayString", "*serviceheaderarraystring.MethodHeaderArrayStringPayload", v)
 		}
-		req.Header.Set("h", p.H)
+		for _, value := range p.H {
+			req.Header.Add("h", value)
+		}
 		return nil
 	}
 }
@@ -1504,7 +1506,9 @@ func EncodeMethodHeaderArrayStringValidateRequest(encoder func(*http.Request) go
 		if !ok {
 			return goahttp.ErrInvalidType("ServiceHeaderArrayStringValidate", "MethodHeaderArrayStringValidate", "*serviceheaderarraystringvalidate.MethodHeaderArrayStringValidatePayload", v)
 		}
-		req.Header.Set("h", p.H)
+		for _, value := range p.H {
+			req.Header.Add("h", value)
+		}
 		return nil
 	}
 }

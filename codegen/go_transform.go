@@ -66,10 +66,10 @@ func GoTransformToVar(source, target *expr.AttributeExpr, sourceVar, targetVar s
 	return strings.TrimRight(code, "\n"), funcs, nil
 }
 
-// TransformPrimitive returns the code to transform source primtive type to
+// transformPrimitive returns the code to transform source primtive type to
 // target primitive type. It returns an error if source and target are not
 // compatible for transformation.
-func TransformPrimitive(source, target *expr.AttributeExpr, sourceVar, targetVar string, newVar bool, ta *TransformAttrs) (string, error) {
+func transformPrimitive(source, target *expr.AttributeExpr, sourceVar, targetVar string, newVar bool, ta *TransformAttrs) (string, error) {
 	if err := IsCompatible(source.Type, target.Type, sourceVar, targetVar); err != nil {
 		return "", err
 	}
@@ -99,7 +99,7 @@ func transformAttribute(source, target *expr.AttributeExpr, sourceVar, targetVar
 	case expr.IsObject(source.Type):
 		code, err = transformObject(source, target, sourceVar, targetVar, newVar, ta)
 	default:
-		code, err = TransformPrimitive(source, target, sourceVar, targetVar, newVar, ta)
+		code, err = transformPrimitive(source, target, sourceVar, targetVar, newVar, ta)
 	}
 	return
 }

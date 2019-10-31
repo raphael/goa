@@ -262,10 +262,10 @@ func InitStructFields(args []*InitArgData, name, targetVar, sourcePkg, targetPkg
 		helpers []*TransformFunctionData
 	)
 	for _, arg := range args {
-		if arg.FieldName == "" {
-			continue
-		}
-		if expr.Equal(arg.Type, arg.FieldType) {
+		switch {
+		case arg.FieldName == "":
+			// do nothing
+		case expr.Equal(arg.Type, arg.FieldType):
 			// arg type and struct field type are the same. No need to call transform
 			// to initialize the field
 			deref := ""
@@ -273,18 +273,30 @@ func InitStructFields(args []*InitArgData, name, targetVar, sourcePkg, targetPkg
 				deref = "&"
 			}
 			code += fmt.Sprintf("%s.%s = %s%s\n", targetVar, arg.FieldName, deref, arg.Name)
-			continue
+		case expr.IsPrimitive(arg.FieldType):
+			// aliased primitive type
+			t := scope.GoFullTypeRef(&expr.AttributeExpr{Type: arg.FieldType}, targetPkg)
+			cast := fmt.Sprintf("%s(%s)", t, arg.Name)
+			if arg.Pointer {
+				cast = fmt.Sprintf("%s(*%s)", t, arg.Name)
+			}
+			if arg.FieldPointer {
+				code += fmt.Sprintf("tmp%s := %s\n%s.%s = &tmp%s\n", arg.Name, cast, targetVar, arg.FieldName, arg.Name)
+			} else {
+				code += fmt.Sprintf("%s.%s = %s\n", targetVar, arg.FieldName, cast)
+			}
+		default:
+			srcctx := NewAttributeContext(arg.Pointer, false, true, sourcePkg, scope)
+			tgtctx := NewAttributeContext(arg.FieldPointer, false, true, targetPkg, scope)
+			c, h, err := GoTransformToVar(
+				&expr.AttributeExpr{Type: arg.Type}, &expr.AttributeExpr{Type: arg.FieldType},
+				arg.Name, fmt.Sprintf("%s.%s", targetVar, arg.FieldName), srcctx, tgtctx, "", false)
+			if err != nil {
+				return "", helpers, err
+			}
+			code += c + "\n"
+			helpers = AppendHelpers(helpers, h)
 		}
-		srcctx := NewAttributeContext(arg.Pointer, false, true, sourcePkg, scope)
-		tgtctx := NewAttributeContext(arg.FieldPointer, false, true, targetPkg, scope)
-		c, h, err := GoTransformToVar(
-			&expr.AttributeExpr{Type: arg.Type}, &expr.AttributeExpr{Type: arg.FieldType},
-			arg.Name, fmt.Sprintf("%s.%s", targetVar, arg.FieldName), srcctx, tgtctx, "", false)
-		if err != nil {
-			return "", helpers, err
-		}
-		code += c + "\n"
-		helpers = AppendHelpers(helpers, h)
 	}
 	return code, helpers, nil
 }

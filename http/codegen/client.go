@@ -446,7 +446,21 @@ func {{ .RequestEncoder }}(encoder func(*http.Request) goahttp.Encoder) func(*ht
 			req.Header.Set({{ printf "%q" .Name }}, "Bearer "+{{ if .FieldPointer }}*{{ end }}p.{{ .FieldName }})
 		} else {
 			{{- end }}
+			{{- if eq .Type.Name "string" }}
 			req.Header.Set({{ printf "%q" .Name }}, {{ if .FieldPointer }}*{{ end }}p.{{ .FieldName }})
+			{{- else if .StringSlice }}
+			for _, value := range p{{ if .FieldName }}.{{ .FieldName }}{{ end }} {
+				req.Header.Add({{ printf "%q" .Name }}, value)
+			}
+			{{- else if .Slice }}
+			for _, value := range p{{ if .FieldName }}.{{ .FieldName }}{{ end }} {
+				{{ template "type_conversion" (typeConversionData .Type.ElemType.Type (aliasedType .FieldType).ElemType.Type "valueStr" "value") }}
+				req.Header.Add("{{ .Name }}", valueStr)
+			{{- else }}
+			value := {{ if .FieldPointer }}*{{ end }}p.{{ .FieldName }}
+			{{ template "type_conversion" (typeConversionData .Type .FieldType "valueStr" "value") }}
+			req.Header.Set({{ printf "%q" .Name }}, valueStr)
+			{{- end }}
 			{{- if (and (eq .Name "Authorization") (isBearer $.HeaderSchemes)) }}
 		}
 			{{- end }}

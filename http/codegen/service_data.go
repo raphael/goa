@@ -22,7 +22,15 @@ var (
 	// pathInitTmpl is the template used to render path constructors code.
 	pathInitTmpl = template.Must(template.New("path-init").Funcs(template.FuncMap{"goify": codegen.Goify}).Parse(pathInitT))
 	// requestInitTmpl is the template used to render request constructors.
-	requestInitTmpl = template.Must(template.New("request-init").Parse(requestInitT))
+	requestInitTmpl = template.Must(template.New("request-init").Funcs(template.FuncMap{
+		"goTypeRef": func(dt expr.DataType, svc string) string {
+			return service.Services.Get(svc).Scope.GoTypeRef(&expr.AttributeExpr{Type: dt})
+		},
+		"isAliased": func(dt expr.DataType) bool {
+			_, ok := dt.(expr.UserType)
+			return ok
+		},
+	}).Parse(requestInitT))
 )
 
 type (
@@ -687,7 +695,9 @@ func (d ServicesData) analyze(hs *expr.HTTPServiceExpr) *ServiceData {
 					i++
 					name := fmt.Sprintf("%s%sPath%s", ep.VarName, svc.StructName, suffix)
 					for j, arg := range params {
-						att := pathParamsObj.Attribute(arg)
+						patt := pathParamsObj.Attribute(arg)
+						att := expr.DupAtt(patt)
+						makeHTTPType(att)
 						pointer := a.Params.IsPrimitivePointer(arg, true)
 						name := rd.Scope.Name(codegen.Goify(arg, false))
 						var vcode string
@@ -700,8 +710,10 @@ func (d ServicesData) analyze(hs *expr.HTTPServiceExpr) *ServiceData {
 							Description: att.Description,
 							Ref:         name,
 							FieldName:   codegen.Goify(arg, true),
+							FieldType:   patt.Type,
 							TypeName:    rd.Scope.GoTypeName(att),
 							TypeRef:     rd.Scope.GoTypeRef(att),
+							Type:        att.Type,
 							Pointer:     pointer,
 							Required:    true,
 							Example:     att.Example(expr.Root.API.Random()),
@@ -2376,6 +2388,7 @@ func extractHeaders(a *expr.MappedAttributeExpr, svcAtt *expr.AttributeExpr, svc
 			if hattr = svcAtt.Find(name); hattr == nil {
 				hattr = svcAtt
 			}
+			hattr = expr.DupAtt(hattr)
 			makeHTTPType(hattr)
 		}
 		var (
@@ -2708,7 +2721,11 @@ const (
 		{{- if .Pointer }}
 		if p{{ if $.HasFields }}.{{ .FieldName }}{{ end }} != nil {
 		{{- end }}
+			{{- if (isAliased .FieldType) }}
+			{{ .Name }} = {{ goTypeRef .Type $.ServiceName }}({{ if .Pointer }}*{{ end }}p{{ if $.HasFields }}.{{ .FieldName }}{{ end }})
+			{{- else }}
 			{{ .Name }} = {{ if .Pointer }}*{{ end }}p{{ if $.HasFields }}.{{ .FieldName }}{{ end }}
+			{{- end }}
 		{{- if .Pointer }}
 		}
 		{{- end }}
