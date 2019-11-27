@@ -108,7 +108,7 @@ without having to make changes.
 Releases are tagged with the corresponding version number. There is also a
 branch for each major version (`v1`, `v2` and `v3`).
 
-Current Release: `v3.0.7`
+Current Release: `v3.0.8`
 
 ## Teaser
 
