@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/dimfeld/httptreemux"
+	"github.com/dimfeld/httptreemux/v5"
 )
 
 type (

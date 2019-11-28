@@ -1,15 +1,21 @@
 #! /usr/bin/make
 #
-# Makefile for goa v3
+# Makefile for Goa v3
 #
 # Targets:
 # - "depend" retrieves the Go packages needed to run the linter and tests
 # - "lint" runs the linter and checks the code format using goimports
 # - "test" runs the tests
+# - "release" creates a new release commit, tags the commit and pushes the tag to GitHub.
+#   "release" also updates the examples and plugins repo and pushes the updates to GitHub.
 #
 # Meta targets:
-# - "all" is the default target, it runs all the targets in the order above.
+# - "all" is the default target, it runs "lint" and "test"
 #
+MAJOR = 3
+MINOR = 0
+BUILD = 8
+
 GOOS=$(shell go env GOOS)
 GO_FILES=$(shell find . -type f -name '*.go')
 
@@ -75,26 +81,36 @@ lint:
 test:
 	env GO111MODULE=on go test ./...
 
-test-examples:
-	@if [ -z $(GOA_BRANCH) ]; then\
-		GOA_BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
-	fi
-	@if [ ! -d $(EXAMPLES_DIR) ]; then\
-		git clone https://github.com/goadesign/examples.git $(EXAMPLES_DIR); \
-	fi
-	@cd $(EXAMPLES_DIR) && git checkout $(GOA_BRANCH) || echo "Using master branch in examples repo" && \
-	make -k travis || (echo "Tests in examples repo (https://github.com/goadesign/examples) failed" \
-                  "due to changes in Goa repo (branch: $(GOA_BRANCH))!" \
-                  "Create a branch with name '$(GOA_BRANCH)' in the examples repo and fix these errors." && exit 1)
+release:
+	@git diff-index --quiet HEAD
+	go mod tidy
+	sed -i '' 's/Build = \[0-9]+\/Build = $(BUILD)' pkg/version.go
+	sed -i '' 's/Current Release: `v3.\.*\/Current Release: `v$(MAJOR).$(MINOR).$(BUILD)`' README.md
+	git add .
+	git commit -m "Release v$(MAJOR).$(MINOR).$(BUILD)"
+	git push origin v$(MAJOR)
+	git tag v$(MAJOR).$(MINOR).$(BUILD)
+	git push origin v$(MAJOR).$(MINOR).$(BUILD)
+	cd $(GOPATH)/src/goa.design/examples && \
+		git checkout master && \
+		git diff-index --quiet HEAD && \
+		sed -i '' 's/goa.design\/goa\/v$(MAJOR) v$(MAJOR)\.*\/goa.design\/goa\/v$(MAJOR) v$(MAJOR).$(MINOR).$(BUILD)' go.mod && \
+		make && \
+		git add . && \
+		git commit -m "Release v$(MAJOR).$(MINOR).$(BUILD)" && \
+		git push origin master && \
+		git tag v$(MAJOR).$(MINOR).$(BUILD) && \
+		git push origin v$(MAJOR).$(MINOR).$(BUILD)
+	cd $(GOPATH)/src/goa.design/plugins && \
+		git checkout v$(MAJOR) && \
+		git diff-index --quiet HEAD && \
+		sed -i '' 's/goa.design\/goa\/v$(MAJOR) v$(MAJOR)\.*\/goa.design\/goa\/v$(MAJOR) v$(MAJOR).$(MINOR).$(BUILD)' go.mod && \
+		make && \
+		git add . && \
+		git commit -m "Release v$(MAJOR).$(MINOR).$(BUILD)" &&\
+		git push origin v$(MAJOR) && \
+		git tag v$(MAJOR).$(MINOR).$(BUILD) && \
+		git push origin v$(MAJOR).$(MINOR).$(BUILD)
+	echo DONE RELEASING v$(MAJOR).$(MINOR).$(BUILD)!
 
-test-plugins:
-	@if [ -z $(GOA_BRANCH) ]; then\
-		GOA_BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
-	fi
-	@if [ ! -d $(PLUGINS_DIR) ]; then\
-		git clone https://github.com/goadesign/plugins.git $(PLUGINS_DIR); \
-	fi
-	@cd $(PLUGINS_DIR) && git checkout $(GOA_BRANCH) || echo "Using master branch in plugins repo" && \
-	make -k test-plugins || (echo "Tests in plugin repo (https://github.com/goadesign/plugins) failed" \
-                  "due to changes in goa repo (branch: $(GOA_BRANCH))!" \
-                  "Create a branch with name '$(GOA_BRANCH)' in the plugin repo and fix these errors." && exit 1)
+
