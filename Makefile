@@ -82,10 +82,10 @@ test:
 	env GO111MODULE=on go test ./...
 
 release:
-	@git diff-index --quiet HEAD
+	#@git diff-index --quiet HEAD
 	go mod tidy
-	sed -i '' 's/Build = \[0-9]+\/Build = $(BUILD)' pkg/version.go
-	sed -i '' 's/Current Release: `v3.\.*\/Current Release: `v$(MAJOR).$(MINOR).$(BUILD)`' README.md
+	sed -e -i '' 's/Build = [0-9]+/Build = $(BUILD)' pkg/version.go
+	sed -e -i '' 's/Current Release: `v3\..*/Current Release: `v$(MAJOR).$(MINOR).$(BUILD)`' README.md
 	git add .
 	git commit -m "Release v$(MAJOR).$(MINOR).$(BUILD)"
 	git push origin v$(MAJOR)
